@@ -62,7 +62,13 @@ class VBULLETIN3_Converter_Module_Privatemessages extends Converter_Module_Priva
 
 		if($data['folderid'] == -1)
 		{
+			// sent mail
 			$insert_data['folder'] = 2;
+		}
+		else if ($data['folderid'] == 0)
+		{
+			// inbox
+			$insert_data['folder'] = 1;
 		}
 		else
 		{
