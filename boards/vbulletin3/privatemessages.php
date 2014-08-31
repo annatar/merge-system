@@ -75,7 +75,7 @@ class VBULLETIN3_Converter_Module_Privatemessages extends Converter_Module_Priva
 			$insert_data['folder'] = 0;
 		}
 
-		$insert_data['subject'] = encode_to_utf8($data['subject'], "pm", "privatemessages");
+		$insert_data['subject'] = encode_to_utf8($data['title'], "pm", "privatemessages");
 		$insert_data['status'] = $data['messageread'];
 		$insert_data['dateline'] = $data['dateline'];
 		$insert_data['message'] = encode_to_utf8($this->bbcode_parser->convert($data['message']), "pmtext", "privatemessages");
