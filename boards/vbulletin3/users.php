@@ -77,7 +77,8 @@ class VBULLETIN3_Converter_Module_Users extends Converter_Module_Users {
 		$data['birthday'] = trim($data['birthday']);
 		if(!empty($data['birthday']))
 		{
-			$insert_data['birthday'] = $data['birthday'];
+			$vbBirthDate = DateTime::createFromFormat("m-d-Y", $data['birthday']);
+			$insert_data['birthday'] = $vbBirthDate->format('d-n-Y');
 		}
 		$insert_data['icq'] = $data['icq'];
 		$insert_data['aim'] = $data['aim'];
