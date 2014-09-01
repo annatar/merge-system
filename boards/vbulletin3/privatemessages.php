@@ -57,6 +57,12 @@ class VBULLETIN3_Converter_Module_Privatemessages extends Converter_Module_Priva
 				$username = $this->get_username($to);
 				$recipients['to'][] = $this->get_import->uid($username['userid']);
 			}
+			if (count($touserarray['cc']) == 1)
+			{
+				$tmpArray = unserialize($data['touserarray']);
+				$toid = intval(key($tmpArray['cc']));
+				$insert_data['toid'] = $toid;
+			}
 		}
 		$insert_data['recipients'] = serialize($recipients);
 
