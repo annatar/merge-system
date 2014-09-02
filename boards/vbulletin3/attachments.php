@@ -102,35 +102,119 @@ class VBULLETIN3_Converter_Module_Attachments extends Converter_Module_Attachmen
 	function after_insert($data, $insert_data, $aid)
 	{
 		global $mybb, $db;
-
-		if($data['thumbnail'])
+	
+		// Transfer attachments
+		$targetFilePath = $mybb->settings['uploadspath']."/";
+		if (empty($data['filedata']))
 		{
-			// Transfer attachment thumbnails
-			$file = @fopen($mybb->settings['uploadspath'].'/'.$insert_data['thumbnail'], 'w');
-			if($file)
+			// the attachment is on the filesystem not in the database
+			$uidDigitArray = str_split(strval($data['userid']));
+			// Set sourceFilePath to full path of vB attachments, ex:  /srv/www/vhosts/myhost/attachments/
+			$sourceFilePath = '';
+			if (empty($sourceFilePath))
 			{
-				@fwrite($file, $data['thumbnail']);
+				// delete the record we were processing from the database and then die
+				$db->delete_query("attachments", "aid = '{$insert_data['aid']}'");
+				die("<span style=\"font-weight:bold;font-size:200%;\">You must set the sourceFilePath in boards/vbulletin3/attachments.php</span>");
+			}
+			foreach ($uidDigitArray as $key => $uidDigit)
+			{
+				$sourceFilePath.=$uidDigit.'/';
+			}
+			$sourceFilePath.=$data['attachmentid'].".attach";
+			if(file_exists($sourceFilePath))
+			{
+				$insert_data['attachname'] = date('Yd', $data['dateline'])."/"."post_".$data['userid']."_".$data['dateline']."_".sha1_file($sourceFilePath).".attach";
 			}
 			else
 			{
-				$this->board->set_error_notice_in_progress("Error transfering the attachment thumbnail (ID: {$aid})");
+				$insert_data['attachname'] = date('Yd', $data['dateline'])."/"."post_".$data['userid']."_".$data['dateline']."_".$data['filehash'].".attach";
 			}
-			@fclose($file);
-			@my_chmod($mybb->settings['uploadspath'].'/'.$insert_data['thumbnail'], '0777');
-		}
 
-		// Transfer attachments
-		$file = @fopen($mybb->settings['uploadspath'].'/'.$insert_data['attachname'], 'w');
-		if($file)
-		{
-			@fwrite($file, $data['filedata']);
+			$db->update_query("attachments", array('attachname' => $insert_data['attachname']), "aid = '{$insert_data['aid']}'");
+			$targetFilePath.=$insert_data['attachname'];
 		}
 		else
 		{
-			$this->board->set_error_notice_in_progress("Error transfering the attachment (ID: {$aid})");
+			$targetFilePath.=$insert_data['attachname'];
 		}
-		@fclose($file);
-		@my_chmod($mybb->settings['uploadspath'].'/'.$insert_data['attachname'], '0777');
+
+		if(file_exists($targetFilePath))
+		{
+			// a matching file already exists...
+		}
+		else
+		{
+			if(!file_exists(dirname($targetFilePath)))
+			{
+				// make sure the path we are going to copy to exists
+				mkdir(dirname($targetFilePath), 0777, true);
+			}
+			$file = @fopen($targetFilePath, 'w');
+			if($file)
+			{
+				if (empty($data['filedata']))
+				{
+					if(file_exists($sourceFilePath))
+					{
+						copy($sourceFilePath, $targetFilePath);
+					}
+				}
+				else
+				{
+					@fwrite($file, $data['filedata']);
+				}
+			}
+			else
+			{
+				$this->board->set_error_notice_in_progress("Error transferring the attachment (ID: {$aid})");
+			}
+			@fclose($file);
+		}
+		@my_chmod($targetFilePath, '0777');
+
+		// Transfer attachment thumbnails
+		$insert_data['thumbnail'] = str_replace(".attach", "_thumb.{$data['extension']}", $insert_data['attachname']);
+		$db->update_query("attachments", array('thumbnail' => $insert_data['thumbnail']), "aid = '{$insert_data['aid']}'");
+		
+		if(file_exists($insert_data['thumbnail']))
+		{
+			// a matching file already exists...
+		}
+		else
+		{
+			$targetFilePath = str_replace(".attach", "_thumb.{$data['extension']}", $targetFilePath);
+			if(!file_exists(dirname($targetFilePath)))
+			{
+				// make sure the path we are going to copy to exists
+				mkdir(dirname($targetFilePath), 0777, true);
+			}
+			$file = @fopen($targetFilePath, 'w');
+			if($file)
+			{
+				if (empty($data['thumbnail']))
+				{
+					$sourceFilePath = str_replace(".attach", ".thumb", $sourceFilePath);
+					if(file_exists($sourceFilePath))
+					{
+						copy($sourceFilePath, $targetFilePath);
+					}
+				}
+				else if($data['thumbnail'])
+				{
+					@fwrite($file, $data['thumbnail']);
+				}
+			}
+			else
+			{
+				$this->board->set_error_notice_in_progress("Error transferring the attachment (ID: {$aid})");
+			}
+			@fclose($file);
+		}
+		if(file_exists($targetFilePath))
+		{
+			@my_chmod($targetFilePath, '0777');
+		}
 
 		if(!$posthash)
 		{
