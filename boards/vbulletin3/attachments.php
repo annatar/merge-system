@@ -145,31 +145,34 @@ class VBULLETIN3_Converter_Module_Attachments extends Converter_Module_Attachmen
 		}
 		else
 		{
-			if(!file_exists(dirname($targetFilePath)))
+			if (file_exists($sourceFilePath))
 			{
-				// make sure the path we are going to copy to exists
-				mkdir(dirname($targetFilePath), 0777, true);
-			}
-			$file = @fopen($targetFilePath, 'w');
-			if($file)
-			{
-				if (empty($data['filedata']))
+				if(!file_exists(dirname($targetFilePath)))
 				{
-					if(file_exists($sourceFilePath))
+					// make sure the path we are going to copy to exists
+					mkdir(dirname($targetFilePath), 0777, true);
+				}
+				$file = @fopen($targetFilePath, 'w');
+				if($file)
+				{
+					if (empty($data['filedata']))
 					{
-						copy($sourceFilePath, $targetFilePath);
+						if(file_exists($sourceFilePath))
+						{
+							copy($sourceFilePath, $targetFilePath);
+						}
+					}
+					else
+					{
+						@fwrite($file, $data['filedata']);
 					}
 				}
 				else
 				{
-					@fwrite($file, $data['filedata']);
+					$this->board->set_error_notice_in_progress("Error transferring the attachment (ID: {$aid})");
 				}
+				@fclose($file);
 			}
-			else
-			{
-				$this->board->set_error_notice_in_progress("Error transferring the attachment (ID: {$aid})");
-			}
-			@fclose($file);
 		}
 		@my_chmod($targetFilePath, '0777');
 		if(file_exists($targetFilePath))
@@ -177,7 +180,7 @@ class VBULLETIN3_Converter_Module_Attachments extends Converter_Module_Attachmen
 			// make sure the filehash column exists
 			if(!$db->field_exists("filehash", "attachments"))
 			{
-				$db->query("ALTER TABLE ".TABLE_PREFIX."attachments ADD `filehash` VARCHAR(128) NOT NULL");
+				$db->query("ALTER TABLE ".TABLE_PREFIX."attachments ADD `filehash` VARCHAR(128) NOT FULL default ''");
 			}
 			$filehash = hash_file('sha256', $targetFilePath);
 			$db->update_query("attachments", array('filehash' => $filehash), "aid = '{$insert_data['aid']}'");
