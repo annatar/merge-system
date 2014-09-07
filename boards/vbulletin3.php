@@ -56,6 +56,7 @@ class VBULLETIN3_Converter extends Converter
 						 "import_settings" => array("name" => "Settings", "dependencies" => "db_configuration"),
 						 "import_events" => array("name" => "Calendar Events", "dependencies" => "db_configuration,import_users"),
 						 "import_attachments" => array("name" => "Attachments", "dependencies" => "db_configuration,import_posts"),
+						 "import_reputations" => array("name" => "Reputations", "dependencies" => "db_configuration,import_users"),
 						);
 
 	/**
