@@ -124,7 +124,7 @@ class VBULLETIN3_Converter_Module_Attachments extends Converter_Module_Attachmen
 			$sourceFilePath.=$data['attachmentid'].".attach";
 			if(file_exists($sourceFilePath))
 			{
-				$insert_data['attachname'] = date('Yd', $data['dateline'])."/"."post_".$data['userid']."_".$data['dateline']."_".sha1_file($sourceFilePath).".attach";
+				$insert_data['attachname'] = date('Yd', $data['dateline'])."/"."post_".$data['userid']."_".$data['dateline']."_".hash('sha256', random_str()).".attach";
 			}
 			else
 			{
@@ -172,6 +172,16 @@ class VBULLETIN3_Converter_Module_Attachments extends Converter_Module_Attachmen
 			@fclose($file);
 		}
 		@my_chmod($targetFilePath, '0777');
+		if(file_exists($targetFilePath))
+		{
+			// make sure the filehash column exists
+			if(!$db->field_exists("filehash", "attachments"))
+			{
+				$db->query("ALTER TABLE ".TABLE_PREFIX."attachments ADD `filehash` VARCHAR(128) NOT NULL");
+			}
+			$filehash = hash_file('sha256', $targetFilePath);
+			$db->update_query("attachments", array('filehash' => $filehash), "aid = '{$insert_data['aid']}'");
+		}
 
 		// Transfer attachment thumbnails
 		$insert_data['thumbnail'] = str_replace(".attach", "_thumb.{$data['extension']}", $insert_data['attachname']);
