@@ -203,7 +203,8 @@ if(isset($mybb->input['reportgen']) && !empty($import_session['board']))
 		'total_icons' => 'Icons',
 		'total_smilies' => 'Smilies',
 		'total_settings' => 'Settings',
-		'total_attachtypes' => 'Attachment Types'
+		'total_attachtypes' => 'Attachment Types',
+		'total_reputations' => 'Reputations'
 	);
 
 	$begin_date = gmdate("r", $import_session['start_date']);
@@ -730,6 +731,7 @@ elseif(isset($mybb->input['action']) && $mybb->input['action'] == 'finish')
 			'total_privatemessages' => 'Private Messages',
 			'total_events' => 'Events',
 			'total_settings' => 'Settings',
+			'total_reputations' => 'Reputations'
 		);
 	
 		$post_data = array();
